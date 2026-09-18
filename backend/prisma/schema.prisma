@@ -1,0 +1,308 @@
+// PawTrack — Prisma schema (SQLite)
+//
+// SQLite has no native enum type, so fields that were Postgres enums in the
+// original design (role, status, category, etc.) are plain String columns.
+// Allowed values are validated in the Express layer (zod) — see src/lib/enums.ts.
+// Allowed values, for reference:
+//   UserRole:          PET_PARENT | PROVIDER
+//   ProviderType:      VET_CLINIC | INDEPENDENT_VET | GROOMER | TRAINER | PET_SITTER
+//   StaffRole:         VET | GROOMER | TRAINER | ASSISTANT | RECEPTIONIST
+//   ServiceCategory:   CHECKUP | VACCINATION | SURGERY | GROOMING | BOARDING | TRAINING | EMERGENCY
+//   SlotStatus:        AVAILABLE | BOOKED | BLOCKED
+//   BookingStatus:     PENDING | CONFIRMED | CANCELLED | COMPLETED | NO_SHOW
+//   RecordType:        VACCINATION | DEWORMING | LAB_RESULT | PRESCRIPTION | VISIT_SUMMARY | IMAGING | OTHER
+//   NotificationType:  BOOKING_REMINDER | BOOKING_STATUS | RECORD_UPLOADED | COMMUNITY_REPLY | SYSTEM
+//   AuditAction:       INSERT | UPDATE | DELETE
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  petParentProfile   PetParentProfile?
+  providerProfile    ProviderProfile?
+  uploadedRecords    PetRecord[]       @relation("RecordUploadedBy")
+  updatedRecords     PetRecord[]       @relation("RecordUpdatedBy")
+  bookingUpdates     Booking[]         @relation("BookingUpdatedBy")
+  notifications      Notification[]
+  auditLogEntries    AuditLog[]
+
+  @@map("users")
+}
+
+model PetParentProfile {
+  userId    String   @id @map("user_id")
+  phoneNo   String?  @map("phone_no")
+  address   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pets             Pet[]
+  bookings         Booking[]         @relation("BookingPetParent")
+  aiConversations  AiConversation[]
+
+  @@map("pet_parent_profiles")
+}
+
+model ProviderProfile {
+  userId       String   @id @map("user_id")
+  providerType String   @map("provider_type")
+  phoneNo      String?  @map("phone_no")
+  address      String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services Service[]
+  staff    StaffMember[]
+  bookings Booking[]       @relation("BookingProvider")
+
+  @@map("provider_profiles")
+}
+
+model Pet {
+  id        String    @id @default(uuid())
+  ownerId   String    @map("owner_id")
+  name      String
+  species   String
+  breed     String?
+  dob       DateTime?
+  ageMonths Int?      @map("age_months")
+  weightKg  Float?    @map("weight_kg")
+  gender    String?
+  alerts    String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  owner           PetParentProfile  @relation(fields: [ownerId], references: [userId], onDelete: Cascade)
+  records         PetRecord[]
+  bookings        Booking[]
+  aiConversations AiConversation[]
+
+  @@index([ownerId])
+  @@map("pets")
+}
+
+// Reference/lookup tables for species & breed pickers — not a foreign key on
+// Pet (species/breed stay plain strings there, matching the original DDL and
+// API contract) but the only source the UI's dropdowns read from and write
+// new entries into, so free-typed casing/spelling drift ("dog" vs "DOG")
+// stops at the picker instead of leaking into stored pet records.
+model Species {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  breeds Breed[]
+
+  @@map("species")
+}
+
+model Breed {
+  id        String   @id @default(uuid())
+  speciesId String   @map("species_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  species Species @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+
+  @@unique([speciesId, name])
+  @@map("breeds")
+}
+
+model Service {
+  id               String   @id @default(uuid())
+  providerId       String   @map("provider_id")
+  name             String
+  description      String?
+  basePrice        Float    @map("base_price")
+  category         String
+  durationMinutes  Int      @map("duration_minutes")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  provider       ProviderProfile @relation(fields: [providerId], references: [userId], onDelete: Cascade)
+  staffServices  StaffService[]
+  bookings       Booking[]
+
+  @@index([providerId, category])
+  @@map("services")
+}
+
+model StaffMember {
+  id        String   @id @default(uuid())
+  providerId String  @map("provider_id")
+  name      String
+  role      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  provider      ProviderProfile @relation(fields: [providerId], references: [userId], onDelete: Cascade)
+  staffServices StaffService[]
+  timeSlots     TimeSlot[]
+  bookings      Booking[]
+
+  @@index([providerId])
+  @@map("staff_members")
+}
+
+model StaffService {
+  staffId   String   @map("staff_id")
+  serviceId String   @map("service_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  staff   StaffMember @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  service Service     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([staffId, serviceId])
+  @@map("staff_services")
+}
+
+model TimeSlot {
+  id            String   @id @default(uuid())
+  staffId       String   @map("staff_id")
+  startDatetime DateTime @map("start_datetime")
+  endDatetime   DateTime @map("end_datetime")
+  status        String   @default("AVAILABLE")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  staff   StaffMember @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  booking Booking?
+
+  @@unique([staffId, startDatetime])
+  @@index([staffId, status, startDatetime])
+  @@map("time_slots")
+}
+
+model Booking {
+  id               String    @id @default(uuid())
+  petId            String    @map("pet_id")
+  petParentId      String    @map("pet_parent_id")
+  providerId       String    @map("provider_id")
+  serviceId        String    @map("service_id")
+  staffId          String    @map("staff_id")
+  slotId           String    @unique @map("slot_id")
+  status           String    @default("PENDING")
+  rating           Int?
+  reviewComment    String?   @map("review_comment")
+  reviewedAt       DateTime? @map("reviewed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  updatedByUserId  String?   @map("updated_by_user_id")
+
+  pet           Pet              @relation(fields: [petId], references: [id])
+  petParent     PetParentProfile @relation("BookingPetParent", fields: [petParentId], references: [userId])
+  provider      ProviderProfile  @relation("BookingProvider", fields: [providerId], references: [userId])
+  service       Service          @relation(fields: [serviceId], references: [id])
+  staff         StaffMember      @relation(fields: [staffId], references: [id])
+  slot          TimeSlot         @relation(fields: [slotId], references: [id])
+  updatedByUser User?            @relation("BookingUpdatedBy", fields: [updatedByUserId], references: [id])
+  records       PetRecord[]
+
+  @@index([petParentId, status])
+  @@index([providerId, status])
+  @@index([petId])
+  @@map("bookings")
+}
+
+model PetRecord {
+  id                String    @id @default(uuid())
+  petId             String    @map("pet_id")
+  bookingId         String?   @map("booking_id")
+  recordType        String    @map("record_type")
+  title             String
+  description       String?
+  recordDate        DateTime  @map("record_date")
+  fileUrl           String?   @map("file_url")
+  uploadedByUserId  String    @map("uploaded_by_user_id")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  updatedByUserId   String?   @map("updated_by_user_id")
+  deletedAt         DateTime? @map("deleted_at")
+
+  pet            Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  booking        Booking? @relation(fields: [bookingId], references: [id])
+  uploadedByUser User     @relation("RecordUploadedBy", fields: [uploadedByUserId], references: [id])
+  updatedByUser  User?    @relation("RecordUpdatedBy", fields: [updatedByUserId], references: [id])
+
+  @@index([petId])
+  @@index([bookingId])
+  @@map("pet_records")
+}
+
+model Notification {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  type          String
+  payload       String?
+  isRead        Boolean   @default(false) @map("is_read")
+  scheduledFor  DateTime? @map("scheduled_for")
+  sentAt        DateTime? @map("sent_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([scheduledFor])
+  @@map("notifications")
+}
+
+model AiConversation {
+  id            String   @id @default(uuid())
+  petParentId   String   @map("pet_parent_id")
+  petId         String?  @map("pet_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  petParent PetParentProfile @relation(fields: [petParentId], references: [userId])
+  pet       Pet?             @relation(fields: [petId], references: [id])
+  messages  AiMessage[]
+
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  role           String
+  content        String
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("ai_messages")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  tableName  String   @map("table_name")
+  recordId   String   @map("record_id")
+  action     String
+  changedBy  String?  @map("changed_by")
+  changedAt  DateTime @default(now()) @map("changed_at")
+  oldValues  String?  @map("old_values")
+  newValues  String?  @map("new_values")
+
+  changedByUser User? @relation(fields: [changedBy], references: [id])
+
+  @@index([tableName, recordId])
+  @@index([changedAt])
+  @@map("audit_log")
+}

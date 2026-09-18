@@ -1,0 +1,399 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Booking Details | VetConnect Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@100..900&amp;family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            background-color: #F4F1EA; /* Tertiary Canvas Color */
+        }
+        .custom-shadow {
+            box-shadow: 0px 4px 20px rgba(74, 69, 66, 0.06);
+        }
+        .transition-soft {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#5f5e59",
+                        "surface-container-high": "#efe6e2",
+                        "surface": "#fff8f5",
+                        "outline-variant": "#ddc1b7",
+                        "on-tertiary-container": "#3f3f3a",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#ff8a5b",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#9f4118",
+                        "primary-fixed": "#ffdbce",
+                        "surface-variant": "#eae1dc",
+                        "secondary-container": "#93eef9",
+                        "on-background": "#1f1b18",
+                        "on-secondary-container": "#006d76",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#e1d8d4",
+                        "primary-fixed-dim": "#ffb599",
+                        "on-primary-container": "#722500",
+                        "on-tertiary-fixed": "#1c1c18",
+                        "on-surface-variant": "#56423b",
+                        "on-primary-fixed-variant": "#7f2b01",
+                        "background": "#fff8f5",
+                        "on-secondary-fixed-variant": "#004f55",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#001f23",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#f5ece8",
+                        "surface-bright": "#fff8f5",
+                        "inverse-on-surface": "#f8efea",
+                        "surface-container-highest": "#eae1dc",
+                        "primary": "#9f4118",
+                        "secondary-fixed": "#96f1fc",
+                        "inverse-primary": "#ffb599",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#acaaa4",
+                        "surface-container-low": "#fbf2ed",
+                        "secondary-fixed-dim": "#79d4df",
+                        "tertiary-fixed": "#e5e2db",
+                        "outline": "#8a726a",
+                        "on-surface": "#1f1b18",
+                        "tertiary-fixed-dim": "#c9c6c0",
+                        "on-primary-fixed": "#370e00",
+                        "on-tertiary-fixed-variant": "#474742",
+                        "inverse-surface": "#34302d",
+                        "secondary": "#006971"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "container-padding-mobile": "20px",
+                        "section-gap": "40px",
+                        "base": "8px",
+                        "container-padding-desktop": "48px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "headline-xl": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="font-body-md text-on-background">
+<!-- Persistent SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low dark:bg-surface-dim border-r border-outline-variant dark:border-outline flex flex-col p-4 gap-2 z-50">
+<div class="mb-8 px-4">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">VetConnect Pro</h1>
+<p class="text-on-surface-variant font-label-sm">Service Provider Portal</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container dark:bg-on-secondary-container text-on-secondary-container dark:text-secondary-container rounded-lg font-bold transition-soft active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined filled-icon">calendar_month</span>
+<span class="font-label-md">Calendar</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-lg transition-soft" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-lg transition-soft" href="#">
+<span class="material-symbols-outlined">star</span>
+<span class="font-label-md">Reviews</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-lg transition-soft" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md">Settings</span>
+</a>
+</nav>
+<div class="pt-4 border-t border-outline-variant space-y-1">
+<button class="w-full bg-primary text-on-primary rounded-xl py-3 px-4 mb-4 font-bold transition-soft hover:brightness-110 active:scale-95 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">add</span>
+                New Appointment
+            </button>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-soft" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md">Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-soft" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center h-16 px-8 sticky top-0 bg-surface dark:bg-surface-dim border-b border-outline-variant z-40">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-soft">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="font-headline-md text-headline-md text-on-surface">Appointment Details</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-soft">notifications</span>
+
+</div>
+<div class="flex items-center gap-3 border-l border-outline-variant pl-6">
+<div class="text-right">
+<p class="font-label-md text-on-surface">Dr. Smith</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest">Senior Veterinarian</p>
+</div>
+<img class="w-10 h-10 rounded-full object-cover ring-2 ring-primary-container" data-alt="A professional portrait of a veterinarian in her 40s wearing a clean white lab coat and a stethoscope. She has a friendly, expert expression, with a soft-focus clinical background featuring warm wooden textures and modern veterinary equipment. The lighting is high-key and inviting, matching a clean medical aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDg0pWFw2CfNvrhaL6REtoDsKHZOkLB5YSlZvGTlBL0o4vMXqj48VQAaL5urICNfZo7QNrdoMsmWAGZpfW00aZzHWlyUMmTDW6lM3NsCtviro98KFmmSYFAMBFDnqGVTlCTzV_e-0KxGIsWOhodWMd3H05eWPH3URLmMVnPOplgv6fisImHCF8zn_b1pjYmlxytquCyD3F9Hr2NBZZPxeAgTFTBygK1unDUhl8AEJQKRTVJh7PK2iiNg_x3y_JF3FH1bUvuQyKHeyvZ">
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="p-8 grid grid-cols-12 gap-8 max-w-[1440px] mx-auto w-full">
+<!-- Left Column: Primary Form Fields -->
+<div class="col-span-8 space-y-6">
+<!-- Appointment Header Card -->
+<section class="bg-surface-container-lowest p-6 rounded-[24px] custom-shadow flex justify-between items-start">
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<span class="bg-primary-container/20 text-on-primary-container px-3 py-1 rounded-full font-label-md">Annual Wellness Checkup</span>
+<span class="text-on-surface-variant">•</span>
+<span class="text-on-surface-variant font-label-md">ID: #BK-8821</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg text-primary">Eleanor Shellstrop &amp; Chidi</h3>
+<div class="flex items-center gap-6 text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">calendar_today</span>
+<span class="font-body-md">Oct 24, 2023</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">schedule</span>
+<span class="font-body-md">10:00 AM - 11:30 AM (90 min)</span>
+</div>
+</div>
+</div>
+<button class="flex items-center gap-2 text-primary font-bold hover:bg-primary-fixed p-2 rounded-lg transition-soft">
+<span class="material-symbols-outlined">edit</span>
+                        Reschedule
+                    </button>
+</section>
+<!-- Visit Summary Section -->
+<section class="bg-surface-container-lowest p-8 rounded-[24px] custom-shadow border border-surface-container-high space-y-6">
+<div>
+<h4 class="font-headline-md text-headline-md mb-2">Visit Summary &amp; Observations</h4>
+<p class="text-on-surface-variant font-body-md">Detail the clinical findings, behavioral notes, and recommended treatments from today's wellness check.</p>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-on-surface px-1">Clinical Notes</label>
+<textarea class="w-full min-h-[200px] bg-surface rounded-xl border-outline-variant focus:border-secondary focus:ring-1 focus:ring-secondary p-4 font-body-md text-on-surface" placeholder="Start typing observation notes here..."></textarea>
+</div>
+<!-- File Upload Area -->
+<div class="space-y-2">
+<label class="font-label-md text-on-surface px-1">Reports &amp; Lab Results</label>
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-10 flex flex-col items-center justify-center gap-4 bg-surface-container-low transition-soft hover:bg-surface-variant cursor-pointer group">
+<div class="w-12 h-12 bg-primary-container rounded-full flex items-center justify-center text-on-primary-container group-hover:scale-110 transition-soft">
+<span class="material-symbols-outlined">cloud_upload</span>
+</div>
+<div class="text-center">
+<p class="font-headline-md text-primary">Upload medical documents</p>
+<p class="text-on-surface-variant font-body-md">Drag and drop or click to browse (PDF, JPG, DICOM)</p>
+</div>
+</div>
+<!-- Uploaded Files Preview -->
+<div class="grid grid-cols-2 gap-4 mt-4">
+<div class="flex items-center gap-3 p-3 bg-surface border border-outline-variant rounded-lg">
+<span class="material-symbols-outlined text-secondary">description</span>
+<div class="flex-1 overflow-hidden">
+<p class="font-label-md truncate text-on-surface">Blood_Panel_Chidi_Q3.pdf</p>
+<p class="text-[10px] text-on-surface-variant">1.2 MB • Uploaded just now</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-error">close</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Action Button -->
+<footer class="flex justify-end pt-4"><button class="flex items-center gap-2 text-primary font-bold hover:bg-primary-fixed p-4 px-8 rounded-2xl transition-soft border border-primary/20 mr-4">
+    <span class="material-symbols-outlined">history</span>
+    View full history
+</button>
+<button class="bg-primary text-on-primary text-body-lg font-bold px-12 py-4 rounded-2xl custom-shadow transition-soft hover:brightness-110 hover:translate-y-[-2px] active:translate-y-0 active:scale-95 flex items-center gap-3">
+<span class="material-symbols-outlined">check_circle</span>
+                        Mark as completed
+                    </button>
+</footer>
+</div>
+<!-- Right Column: Contextual Sidebar -->
+<aside class="col-span-4 space-y-6">
+<!-- Pet & Client Profile Card -->
+<section class="bg-surface-container-lowest rounded-[24px] overflow-hidden custom-shadow border border-surface-container-high">
+<div class="h-32 bg-secondary-container relative">
+<div class="absolute -bottom-10 left-6">
+<img class="w-24 h-24 rounded-2xl object-cover border-4 border-surface-container-lowest shadow-lg" data-alt="A macro close-up portrait of a cheerful Yellow Labrador Retriever named Chidi. The dog has soft brown eyes, a slightly open mouth showing a happy expression, and a clean, glossy coat. The background is a soft-focus vet clinic with teal and white accents, creating a professional yet warm atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgwj8QlVxrG_h2V16CpedItmcd68p9X3Bhstwu8Vh8VJ0yYHkNDs9Sv0szE4XWwqdl3W9B9zKJlV9KyoEoheM-UuKAgg-LsZSzVWSUS2Lp4UQ64EaMIkZEBnImFrCpq1ZkdLJUMq1fKnlEUpJuVhi2oWJ7k63BzPtD90AdruKP-NmRjrRU3kaOw93_kXsmQ5yP7EW0FQpyTiYN-CW5OAAwFX76-bnKFOJk1tCmXjRXGlffAXAU1c4KssAdYEVqingSLAEs5rppUtxJ">
+</div>
+</div>
+<div class="pt-12 p-6 space-y-6">
+<div>
+<div class="flex items-center justify-between">
+<h4 class="font-headline-md text-headline-md">Chidi</h4>
+<span class="bg-secondary/10 text-on-secondary-container px-3 py-1 rounded-full text-[12px] font-bold">ACTIVE PATIENT</span>
+</div>
+<p class="text-on-surface-variant font-body-md">Yellow Labrador Retriever • 3 Years Old</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-3 bg-surface rounded-xl border border-outline-variant">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold">Weight</p>
+<p class="font-headline-md text-primary">32.4 kg</p>
+</div>
+<div class="p-3 bg-surface rounded-xl border border-outline-variant">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold">Last Visit</p>
+<p class="font-headline-md text-primary">6 Months</p>
+</div>
+</div>
+<!-- Alerts -->
+<div class="space-y-2">
+<h5 class="font-label-md text-on-surface">Critical Alerts</h5>
+<div class="bg-error-container/30 border border-error/20 p-4 rounded-xl flex items-start gap-3">
+<span class="material-symbols-outlined text-error mt-0.5">warning</span>
+<div>
+<p class="font-label-md text-on-error-container">Severe Nut Allergy</p>
+<p class="text-sm text-on-error-container/80">Avoid all peanut-based treats during examination.</p>
+</div>
+</div>
+<div class="bg-secondary-container/20 border border-secondary/20 p-4 rounded-xl flex items-start gap-3">
+<span class="material-symbols-outlined text-on-secondary-container mt-0.5">info</span>
+<div>
+<p class="font-label-md text-on-secondary-container">Anxiety Trigger</p>
+<p class="text-sm text-on-secondary-container/80">Dislikes loud metallic noises. Use soft voice.</p>
+</div>
+</div>
+</div>
+<!-- Client Info -->
+<div class="pt-6 border-t border-outline-variant space-y-4">
+<h5 class="font-label-md text-on-surface">Owner Details</h5>
+<div class="flex items-center gap-3">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="A portrait of a woman in her late 30s with a sharp, intelligent look and a kind smile. She is dressed in a professional casual outfit, like a designer blazer, reflecting a sophisticated city dweller. The background is a soft, warm interior with subtle hints of mid-century modern design and green plants." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUfyPqre6B91O5HEztzgQe7zLAojCWvrR20awZOYstOPzBWSAuEAZSVDCYL7avoMPzxM5HLoTJ0shW_c3zWSf7tGUDelykv1naOExaMcrlWQYK-m1jf_zMTEjH-g7xysdY6-tFlpTsXfU5KDK9okIww9o_YIZUUFkIoSnMmP0swjXtoI3ewNqvmqsVhRtkDfcLxMaN9Y8N1Z3BKVS9Hi5EGcEtrpOLr93mad9BtLaIfGypkMJVkVnu9atK_a3mhsAzKBV0m9r2inaO">
+<div class="flex-1">
+<p class="font-label-md text-on-surface">Eleanor Shellstrop</p>
+<p class="text-[12px] text-on-surface-variant">Verified Pet Parent</p>
+</div>
+<button class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center hover:scale-110 transition-soft">
+<span class="material-symbols-outlined text-[18px]">call</span>
+</button>
+</div>
+<div class="space-y-2">
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+<span class="text-sm">eleanor@thegoodplace.com</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">location_on</span>
+<span class="text-sm">123 Phoenix Way, Apt 4B</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Quick History Component -->
+<section class="bg-surface-container-lowest p-6 rounded-[24px] custom-shadow border border-surface-container-high space-y-4">
+<div class="flex items-center justify-between">
+<h4 class="font-label-md text-on-surface">Vaccination Status</h4>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">history</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">check_circle</span>
+<div class="flex-1">
+<p class="text-sm font-label-md">Rabies</p>
+<div class="w-full h-1.5 bg-surface-variant rounded-full mt-1 overflow-hidden">
+<div class="w-full h-full bg-secondary"></div>
+</div>
+</div>
+<span class="text-[10px] font-bold text-secondary">UP TO DATE</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">error</span>
+<div class="flex-1">
+<p class="text-sm font-label-md">DHPP</p>
+<div class="w-full h-1.5 bg-surface-variant rounded-full mt-1 overflow-hidden">
+<div class="w-4/5 h-full bg-primary"></div>
+</div>
+</div>
+<span class="text-[10px] font-bold text-primary">DUE SOON</span>
+</div>
+</div>
+</section>
+</aside>
+</div>
+</main>
+<script>
+        // Micro-interaction for the file upload area
+        const dropZone = document.querySelector('.border-dashed');
+        if (dropZone) {
+            ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    if (eventName === 'dragover') {
+                        dropZone.classList.add('bg-secondary-container/20', 'border-secondary');
+                    } else {
+                        dropZone.classList.remove('bg-secondary-container/20', 'border-secondary');
+                    }
+                });
+            });
+        }
+
+        // Active state indicator for nav items
+        const navItems = document.querySelectorAll('aside nav a');
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(i => {
+                    i.classList.remove('bg-secondary-container', 'dark:bg-on-secondary-container', 'text-on-secondary-container', 'dark:text-secondary-container', 'font-bold');
+                    i.classList.add('text-on-surface-variant', 'dark:text-surface-variant');
+                    const icon = i.querySelector('.material-symbols-outlined');
+                    if(icon) icon.classList.remove('filled-icon');
+                });
+                item.classList.add('bg-secondary-container', 'dark:bg-on-secondary-container', 'text-on-secondary-container', 'dark:text-secondary-container', 'font-bold');
+                item.classList.remove('text-on-surface-variant', 'dark:text-surface-variant');
+                const activeIcon = item.querySelector('.material-symbols-outlined');
+                if(activeIcon) activeIcon.classList.add('filled-icon');
+            });
+        });
+    </script>
+
+
+
+
+
+
+</body></html>

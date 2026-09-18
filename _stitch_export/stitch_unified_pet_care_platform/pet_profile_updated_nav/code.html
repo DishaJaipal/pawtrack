@@ -1,0 +1,312 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Pet Profile - VetCare Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-tab-pill {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.5s ease-out forwards;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#acaaa4",
+                        "surface-dim": "#e1d8d4",
+                        "on-primary-fixed": "#370e00",
+                        "tertiary-fixed-dim": "#c9c6c0",
+                        "on-secondary-container": "#006d76",
+                        "on-primary-container": "#722500",
+                        "on-tertiary-fixed": "#1c1c18",
+                        "surface-container": "#f5ece8",
+                        "primary": "#9f4118",
+                        "surface-variant": "#eae1dc",
+                        "on-primary": "#ffffff",
+                        "outline": "#8a726a",
+                        "surface-container-high": "#efe6e2",
+                        "on-secondary-fixed": "#001f23",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#ddc1b7",
+                        "on-secondary-fixed-variant": "#004f55",
+                        "on-background": "#1f1b18",
+                        "secondary": "#006971",
+                        "secondary-container": "#93eef9",
+                        "error": "#ba1a1a",
+                        "primary-container": "#ff8a5b",
+                        "on-surface-variant": "#56423b",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#34302d",
+                        "on-primary-fixed-variant": "#7f2b01",
+                        "inverse-on-surface": "#f8efea",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#ffdbce",
+                        "on-tertiary-fixed-variant": "#474742",
+                        "on-surface": "#1f1b18",
+                        "surface-container-highest": "#eae1dc",
+                        "tertiary": "#5f5e59",
+                        "inverse-primary": "#ffb599",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#3f3f3a",
+                        "primary-fixed-dim": "#ffb599",
+                        "secondary-fixed": "#96f1fc",
+                        "surface-container-low": "#fbf2ed",
+                        "surface": "#fff8f5",
+                        "surface-tint": "#9f4118",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#fff8f5",
+                        "background": "#fff8f5",
+                        "secondary-fixed-dim": "#79d4df",
+                        "tertiary-fixed": "#e5e2db"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding-desktop": "48px",
+                        "base": "8px",
+                        "gutter": "16px",
+                        "section-gap": "40px",
+                        "container-padding-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "headline-xl": ["Plus Jakarta Sans"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-32">
+<!-- Hero Section -->
+<header class="relative w-full h-[397px] overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60 z-10"></div>
+<div class="absolute inset-0 w-full h-full" data-alt="A professional high-resolution close-up portrait of a friendly Golden Retriever sitting in a sun-drenched modern minimalist home. The lighting is soft and golden, highlighting the texture of the dog's fur. The background is a blurred aesthetic living space with warm wood accents and neutral tones, fitting a clean light-mode UI. The overall mood is peaceful and loving, capturing the bond between a pet and their home." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBToMoVwzLEbxvgItpb2oygNsxzunZe8uOTIDxJYt-2Sp4jUsa1mPtlHdypz8LR_UT5ztdDDnpef9TtkCmqMKlxJOsmV69eiuCIpprFJ4WFAFTIBqddt49YUVW_cL1iwmGe-wVeipIBEqqgxBCW-y1LApKS37rxQ54Odv4vosaMTxFz57PEANKECQi3mQxQDEvIQWCzZ34OK0GOrjOgUzSBZ8E_vhG-FIxZ70lInS7s0ZFUuCUa-QrkhYVIw_Evv-V0HhfU6ELWgcC7')"></div>
+<div class="absolute top-4 left-4 z-20">
+<button class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white active:scale-90 transition-transform">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+</div>
+<div class="absolute bottom-0 left-0 w-full p-container-padding-mobile z-20 flex justify-between items-end">
+<div class="text-white">
+<p class="font-label-md text-label-md text-secondary-container uppercase tracking-widest mb-1">Golden Retriever</p>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile mb-1">Cooper</h1>
+<p class="font-body-md text-white/80">3 Years • Male • 32kg</p>
+</div>
+<button class="w-12 h-12 rounded-2xl bg-primary shadow-lg flex items-center justify-center text-white hover:bg-on-primary-fixed-variant active:scale-95 transition-all">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</header>
+<!-- Navigation Tabs -->
+<nav class="sticky top-0 bg-background/80 backdrop-blur-xl z-30 px-container-padding-mobile py-4 shadow-sm">
+<div class="flex space-x-1 bg-surface-container p-1 rounded-2xl">
+<button class="flex-1 py-3 text-center rounded-xl font-label-md text-label-md transition-all text-on-surface-variant" id="tab-details" onclick="switchTab('details')">
+                Details
+            </button>
+<button class="flex-1 py-3 text-center rounded-xl font-label-md text-label-md transition-all bg-white text-secondary shadow-sm" id="tab-records" onclick="switchTab('records')">
+                Records
+            </button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="px-container-padding-mobile pt-gutter">
+<!-- Details Section -->
+<section class="animate-slide-up space-y-gutter hidden" id="section-details">
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white p-4 rounded-3xl shadow-[0px_4px_20px_rgba(74,69,66,0.06)] border border-outline-variant/30 flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-primary mb-2" style="font-variation-settings: 'FILL' 1;">weight</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Weight</p>
+<p class="font-headline-md text-headline-md text-primary">32.4 kg</p>
+</div>
+<div class="bg-white p-4 rounded-3xl shadow-[0px_4px_20px_rgba(74,69,66,0.06)] border border-outline-variant/30 flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-secondary mb-2" style="font-variation-settings: 'FILL' 1;">cake</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Birthday</p>
+<p class="font-headline-md text-headline-md text-secondary">May 12</p>
+</div>
+</div>
+<div class="bg-white p-6 rounded-3xl shadow-[0px_4px_20px_rgba(74,69,66,0.06)] border border-outline-variant/30">
+<h3 class="font-headline-md text-headline-md mb-4 flex items-center">
+<span class="material-symbols-outlined mr-2 text-error">warning</span>
+                    Health Alerts
+                </h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 bg-secondary/10 text-secondary rounded-full font-label-md text-label-md">Vaccinated</span>
+<span class="px-4 py-2 bg-error/10 text-error rounded-full font-label-md text-label-md">Nut Allergy</span>
+<span class="px-4 py-2 bg-primary/10 text-primary rounded-full font-label-md text-label-md">Microchipped</span>
+</div>
+</div>
+<div class="bg-white p-6 rounded-3xl shadow-[0px_4px_20px_rgba(74,69,66,0.06)] border border-outline-variant/30">
+<h3 class="font-headline-md text-headline-md mb-4">Bio</h3>
+<p class="font-body-md text-on-surface-variant leading-relaxed">
+                    Cooper is a high-energy Golden Retriever who loves morning park visits and swimming. He is very friendly with other dogs and especially gentle with children.
+                </p>
+</div>
+</section>
+<!-- Records Section (Hidden by default) -->
+<section class="animate-slide-up space-y-4" id="section-records"><!-- Category Filter -->
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2">
+    <span class="px-4 py-2 bg-secondary text-white rounded-full font-label-md text-label-md whitespace-nowrap cursor-pointer">All</span>
+    <span class="px-4 py-2 bg-surface-container text-on-surface-variant rounded-full font-label-md text-label-md whitespace-nowrap cursor-pointer hover:bg-surface-variant/50">Vaccines</span>
+    <span class="px-4 py-2 bg-surface-container text-on-surface-variant rounded-full font-label-md text-label-md whitespace-nowrap cursor-pointer hover:bg-surface-variant/50">Deworming</span>
+    <span class="px-4 py-2 bg-surface-container text-on-surface-variant rounded-full font-label-md text-label-md whitespace-nowrap cursor-pointer hover:bg-surface-variant/50">Prescription</span>
+    <span class="px-4 py-2 bg-surface-container text-on-surface-variant rounded-full font-label-md text-label-md whitespace-nowrap cursor-pointer hover:bg-surface-variant/50">Lab Results</span>
+</div>
+
+<!-- Time Filter -->
+<div class="flex gap-4 border-b border-outline-variant/20 pb-2"><div class="flex gap-4 overflow-x-auto hide-scrollbar w-full"><button class="text-label-md font-label-md text-secondary border-b-2 border-secondary pb-2 whitespace-nowrap">All Time</button><button class="text-label-md font-label-md text-on-surface-variant hover:text-secondary transition-colors pb-2 whitespace-nowrap">Last 3 Months</button><button class="text-label-md font-label-md text-on-surface-variant hover:text-secondary transition-colors pb-2 whitespace-nowrap">Last 6 Months</button><button class="text-label-md font-label-md text-on-surface-variant hover:text-secondary transition-colors pb-2 whitespace-nowrap">Last Year</button></div></div>
+
+<!-- Timeline Records -->
+<div class="relative space-y-8 pt-4">
+    <!-- Vertical Line -->
+    <div class="absolute left-6 top-4 bottom-4 w-0.5 bg-outline-variant/30"></div>
+
+    <!-- Timeline Item 1 -->
+    <div class="relative flex items-start gap-4">
+        <div class="relative z-10 w-12 h-12 rounded-2xl bg-secondary-container flex items-center justify-center text-on-secondary-container shadow-sm">
+            <span class="material-symbols-outlined">description</span>
+        </div>
+        <div class="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-outline-variant/20">
+            <p class="font-label-md text-label-md text-on-surface">Annual Checkup</p>
+            <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Oct 24, 2023</p>
+            <p class="font-label-sm text-label-sm text-secondary">Dr. Sarah Miller</p>
+        </div>
+    </div>
+
+    <!-- Timeline Item 2 -->
+    <div class="relative flex items-start gap-4">
+        <div class="relative z-10 w-12 h-12 rounded-2xl bg-primary-container/30 flex items-center justify-center text-primary shadow-sm">
+            <span class="material-symbols-outlined">vaccines</span>
+        </div>
+        <div class="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-outline-variant/20">
+            <p class="font-label-md text-label-md text-on-surface">Rabies Booster</p>
+            <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Aug 12, 2023</p>
+            <p class="font-label-sm text-label-sm text-secondary">VetCare Clinic</p>
+        </div>
+    </div>
+
+    <!-- Timeline Item 3 -->
+    <div class="relative flex items-start gap-4">
+        <div class="relative z-10 w-12 h-12 rounded-2xl bg-tertiary-container/30 flex items-center justify-center text-tertiary shadow-sm">
+            <span class="material-symbols-outlined">medical_information</span>
+        </div>
+        <div class="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-outline-variant/20">
+            <p class="font-label-md text-label-md text-on-surface">Dental Cleaning</p>
+            <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Jun 05, 2023</p>
+            <p class="font-label-sm text-label-sm text-secondary">Specialized Pet Care</p>
+        </div>
+    </div>
+</div></section>
+</main>
+<!-- FAB for Record Upload (Contextually only for Records tab or always as primary action) -->
+<div class="fixed bottom-24 right-6 z-40" id="fab-container">
+<button class="group flex items-center gap-2 bg-primary text-white pl-4 pr-6 py-4 rounded-3xl shadow-lg active:scale-90 transition-all">
+<span class="material-symbols-outlined">add</span>
+<span class="font-label-md text-label-md">Upload Record</span>
+</button>
+</div>
+<!-- BottomNavBar Component Implementation -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-container-padding-mobile pb-4 pt-2 bg-surface dark:bg-surface-container-high z-50 rounded-t-3xl shadow-[0px_-4px_20px_rgba(74,69,66,0.06)]">
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/50 transition-colors cursor-pointer p-2 rounded-2xl">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/50 transition-colors cursor-pointer p-2 rounded-2xl">
+<span class="material-symbols-outlined">search</span>
+<span class="font-label-sm text-label-sm">Search</span>
+</div>
+<!-- Profile is active for this view as it's a pet profile which falls under the user's entity hierarchy -->
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 after:content-[''] after:block after:w-1.5 after:h-1.5 after:bg-secondary after:rounded-full after:mt-1 scale-95 active:scale-90 transition-transform duration-200 cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</div>
+</nav>
+<script>
+        function switchTab(tab) {
+            const detailsBtn = document.getElementById('tab-details');
+            const recordsBtn = document.getElementById('tab-records');
+            const detailsSec = document.getElementById('section-details');
+            const recordsSec = document.getElementById('section-records');
+            const fab = document.getElementById('fab-container');
+
+            if (tab === 'details') {
+                // UI Toggle
+                detailsBtn.classList.add('bg-white', 'text-secondary', 'shadow-sm');
+                detailsBtn.classList.remove('text-on-surface-variant');
+                recordsBtn.classList.remove('bg-white', 'text-secondary', 'shadow-sm');
+                recordsBtn.classList.add('text-on-surface-variant');
+                
+                // Section Toggle
+                detailsSec.classList.remove('hidden');
+                recordsSec.classList.add('hidden');
+                
+                // FAB Context (Optional: Show always or specific to records)
+                // fab.classList.add('translate-y-32'); 
+            } else {
+                // UI Toggle
+                recordsBtn.classList.add('bg-white', 'text-secondary', 'shadow-sm');
+                recordsBtn.classList.remove('text-on-surface-variant');
+                detailsBtn.classList.remove('bg-white', 'text-secondary', 'shadow-sm');
+                detailsBtn.classList.add('text-on-surface-variant');
+                
+                // Section Toggle
+                recordsSec.classList.remove('hidden');
+                detailsSec.classList.add('hidden');
+                
+                // fab.classList.remove('translate-y-32');
+            }
+        }
+    </script>
+
+
+
+
+</body></html>
