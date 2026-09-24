@@ -1,6 +1,4 @@
-// SQLite has no native enum type — these are the allowed values for the
-// String columns that were Postgres enums in the original DDL, enforced
-// here with zod at the API boundary instead of by the database.
+
 import { z } from "zod";
 
 export const UserRole = z.enum(["PET_PARENT", "PROVIDER"]);
