@@ -184,8 +184,13 @@ model TimeSlot {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  staff   StaffMember @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  booking Booking?
+  staff    StaffMember @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  // One-to-many, not one-to-one: a cancelled booking frees its slot back to
+  // AVAILABLE, and the same slot can then be booked again by someone else —
+  // so a slot legitimately accumulates multiple bookings over its lifetime
+  // (never more than one *active* one; that's enforced by the AVAILABLE/
+  // BOOKED status guard in bookings.ts, not by a DB constraint here).
+  bookings Booking[]
 
   @@unique([staffId, startDatetime])
   @@index([staffId, status, startDatetime])
@@ -199,11 +204,8 @@ model Booking {
   providerId       String    @map("provider_id")
   serviceId        String    @map("service_id")
   staffId          String    @map("staff_id")
-  slotId           String    @unique @map("slot_id")
+  slotId           String    @map("slot_id")
   status           String    @default("PENDING")
-  rating           Int?
-  reviewComment    String?   @map("review_comment")
-  reviewedAt       DateTime? @map("reviewed_at")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
   updatedByUserId  String?   @map("updated_by_user_id")

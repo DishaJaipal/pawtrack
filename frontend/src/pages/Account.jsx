@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { PetParentLayout } from "../layouts/PetParentLayout";
 import { ApiError, api } from "../lib/api";
 import { Avatar } from "../components/Avatar";
 import { Button, ErrorBanner } from "../components/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { RescheduleModal } from "../components/RescheduleModal";
 import { FormField } from "../components/FormField";
 const STATUS_STYLES = {
     PENDING: "bg-surface-container-high text-on-surface-variant",
@@ -27,6 +28,9 @@ export default function Account() {
     }, []);
     const [pets, setPets] = useState(parentProfile?.pets ?? []);
     const [bookings, setBookings] = useState([]);
+    const [reschedulingBooking, setReschedulingBooking] = useState(null);
+    const [cancellingId, setCancellingId] = useState(null);
+    const [cancelTarget, setCancelTarget] = useState(null);
     const [petFilter, setPetFilter] = useState("ALL");
     const [loadingBookings, setLoadingBookings] = useState(true);
     const [menuOpen, setMenuOpen] = useState(false);
@@ -55,6 +59,22 @@ export default function Account() {
         await logout();
         navigate("/login");
     }
+    async function handleCancelBooking() {
+        const booking = cancelTarget;
+        setCancellingId(booking.id);
+        try {
+            const updated = await api.patch(`/bookings/${booking.id}/cancel`);
+            setBookings((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+            setCancelTarget(null);
+        }
+        catch (err) {
+            setError(err instanceof ApiError ? err.message : "Failed to cancel booking");
+        }
+        finally {
+            setCancellingId(null);
+        }
+    }
+
     async function confirmDeletePet() {
         if (!deletePet)
             return;
@@ -166,22 +186,35 @@ export default function Account() {
           {loadingBookings ? (<p className="font-body-md text-body-md text-on-surface-variant">Loading...</p>) : filteredBookings.length === 0 ? (<p className="font-body-md text-body-md text-on-surface-variant">
               No bookings yet — once you book a service, it'll show up here.
             </p>) : (<div className="space-y-3">
-              {filteredBookings.map((b) => (<div key={b.id} className="soft-card-shadow flex items-center justify-between rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
-                  <div>
-                    <p className="font-label-md text-label-md text-on-surface">
-                      {b.service.name} · {b.pet.name}
-                    </p>
-                    <p className="font-label-sm text-label-sm text-on-surface-variant">
-                      {new Date(b.slot.startDatetime).toLocaleString(undefined, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                })}
-                    </p>
-                  </div>
-                  <span className={`font-label-sm text-label-sm rounded-full px-3 py-1 ${STATUS_STYLES[b.status]}`}>
-                    {b.status}
-                  </span>
-                </div>))}
+              {filteredBookings.map((b) => {
+                const canManage = b.status === "PENDING" || b.status === "CONFIRMED";
+                return (<div key={b.id} className="soft-card-shadow rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
+                  <Link to={`/bookings/${b.id}`} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-label-md text-label-md text-on-surface">
+                        {b.service.name} · {b.pet.name}
+                      </p>
+                      <p className="font-label-sm text-label-sm text-on-surface-variant">
+                        {new Date(b.slot.startDatetime).toLocaleString(undefined, {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                  })}
+                      </p>
+                    </div>
+                    <span className={`font-label-sm text-label-sm rounded-full px-3 py-1 ${STATUS_STYLES[b.status]}`}>
+                      {b.status}
+                    </span>
+                  </Link>
+                  {canManage && (<div className="mt-3 flex gap-4">
+                      <button onClick={() => setReschedulingBooking(b)} className="font-label-sm text-label-sm text-secondary">
+                        Reschedule
+                      </button>
+                      <button onClick={() => setCancelTarget(b)} disabled={cancellingId === b.id} className="font-label-sm text-label-sm text-error disabled:opacity-50">
+                        Cancel
+                      </button>
+                    </div>)}
+                </div>);
+              })}
             </div>)}
         </section>
 
@@ -200,6 +233,11 @@ export default function Account() {
       {deletePet && (<ConfirmDialog title={`Delete ${deletePet.name}?`} message="This removes them from your account. Their medical records are kept but the pet profile can't be undone." confirming={busy} onConfirm={confirmDeletePet} onCancel={() => setDeletePet(null)}/>)}
 
       {deleteAccountOpen && (<ConfirmDialog title="Delete your account?" message="This permanently deletes your account, pets, and records. This can't be undone." confirmLabel="Delete my account" confirming={busy} onConfirm={confirmDeleteAccount} onCancel={() => setDeleteAccountOpen(false)}/>)}
+      {cancelTarget && (<ConfirmDialog title="Cancel this booking?" message="This frees up the time slot and notifies the provider." confirmLabel="Cancel Booking" confirming={cancellingId === cancelTarget.id} onConfirm={handleCancelBooking} onCancel={() => setCancelTarget(null)}/>)}
+      {reschedulingBooking && (<RescheduleModal booking={reschedulingBooking} onClose={() => setReschedulingBooking(null)} onRescheduled={(updated) => {
+                setBookings((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+                setReschedulingBooking(null);
+            }}/>)}
     </PetParentLayout>);
 }
 function EditAccountModal({ onClose, onSaved, }) {

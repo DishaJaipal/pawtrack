@@ -14,16 +14,19 @@ export default function FindAProvider() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState(null);
+    const [location, setLocation] = useState("");
     const load = useCallback(async () => {
         const params = new URLSearchParams();
         if (search.trim())
             params.set("search", search.trim());
         if (category)
             params.set("category", category);
+        if (location.trim())
+            params.set("location", location.trim());
         const query = params.toString();
         const data = await api.get(`/providers${query ? `?${query}` : ""}`);
         setProviders(data);
-    }, [search, category]);
+    }, [search, category, location]);
     useEffect(() => {
         setLoading(true);
         load().finally(() => setLoading(false));
@@ -32,7 +35,7 @@ export default function FindAProvider() {
         const t = setTimeout(() => load(), 300);
         return () => clearTimeout(t);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search]);
+    }, [search, location]);
     return (<PetParentLayout active="search">
       <div className="mx-auto max-w-4xl px-container-padding-mobile py-6 md:px-container-padding-desktop">
         <h1 className="font-headline-lg text-headline-lg mb-4 text-on-surface">Find a Provider</h1>
@@ -42,6 +45,13 @@ export default function FindAProvider() {
             search
           </span>
           <input className="h-14 w-full rounded-2xl border-none bg-surface-container-low pl-12 pr-4 font-body-md text-body-md shadow-sm outline-none placeholder:text-on-surface-variant/60 focus:ring-2 focus:ring-secondary" placeholder="Search by business name..." value={search} onChange={(e) => setSearch(e.target.value)}/>
+        </div>
+
+        <div className="relative mt-3">
+          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">
+            location_on
+          </span>
+          <input className="h-12 w-full rounded-xl border border-outline-variant bg-surface-container-lowest pl-12 pr-4 font-body-md text-body-md outline-none focus:border-secondary" placeholder="Filter by area, e.g. Kothrud" value={location} onChange={(e) => setLocation(e.target.value)}/>
         </div>
 
         <div className="hide-scrollbar mt-4 flex gap-2 overflow-x-auto pb-2">
@@ -69,15 +79,7 @@ export default function FindAProvider() {
                 </div>
                 <div className="flex flex-1 flex-col justify-between">
                   <div>
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-headline-md text-body-lg font-semibold text-on-surface">{p.name}</h3>
-                      <div className="flex items-center gap-1 rounded-lg bg-secondary-container/40 px-2 py-1 text-secondary">
-                        <span className="material-symbols-outlined text-[16px]">star</span>
-                        <span className="font-label-md text-label-md">
-                          {p.rating != null ? p.rating.toFixed(1) : "New"}
-                        </span>
-                      </div>
-                    </div>
+                    <h3 className="font-headline-md text-body-lg font-semibold text-on-surface">{p.name}</h3>
                     <p className="mt-1 text-sm text-on-surface-variant">
                       {PROVIDER_TYPES.find((t) => t.value === p.providerType)?.label ?? p.providerType}
                     </p>

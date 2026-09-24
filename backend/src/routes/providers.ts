@@ -17,39 +17,30 @@ router.get(
   asyncHandler(async (req, res) => {
     const category = typeof req.query.category === "string" ? req.query.category : undefined;
     const search = typeof req.query.search === "string" ? req.query.search.trim().toLowerCase() : undefined;
+    // Plain substring match on the free-text address field — there's no
+    // structured street/city/zip breakdown to geocode accurately against,
+    // so this is "does the typed text appear in the address" rather than
+    // a real distance search.
+    const location = typeof req.query.location === "string" ? req.query.location.trim().toLowerCase() : undefined;
 
     const providers = await prisma.providerProfile.findMany({
       where: category ? { providerType: category } : {},
       include: { user: { select: { id: true, name: true } }, services: { where: { isActive: true } } },
     });
-    const filtered = search ? providers.filter((p) => p.user.name.toLowerCase().includes(search)) : providers;
-
-    const ratings = await prisma.booking.findMany({
-      where: { providerId: { in: filtered.map((p) => p.userId) }, rating: { not: null } },
-      select: { providerId: true, rating: true },
-    });
-    const ratingByProvider = new Map<string, number[]>();
-    for (const r of ratings) {
-      if (r.rating == null) continue;
-      const list = ratingByProvider.get(r.providerId) ?? [];
-      list.push(r.rating);
-      ratingByProvider.set(r.providerId, list);
+    let filtered = search ? providers.filter((p) => p.user.name.toLowerCase().includes(search)) : providers;
+    if (location) {
+      filtered = filtered.filter((p) => p.address?.toLowerCase().includes(location));
     }
 
-    res.json(
-      filtered.map((p) => {
-        const list = ratingByProvider.get(p.userId) ?? [];
-        return {
-          id: p.userId,
-          name: p.user.name,
-          providerType: p.providerType,
-          address: p.address,
-          services: p.services,
-          rating: list.length ? list.reduce((a, b) => a + b, 0) / list.length : null,
-          reviewCount: list.length,
-        };
-      })
-    );
+    const results = filtered.map((p) => ({
+      id: p.userId,
+      name: p.user.name,
+      providerType: p.providerType,
+      address: p.address,
+      services: p.services,
+    }));
+
+    res.json(results);
   })
 );
 
@@ -64,11 +55,6 @@ router.get(
       res.status(404).json({ message: "Provider not found" });
       return;
     }
-    const ratings = await prisma.booking.findMany({
-      where: { providerId: provider.userId, rating: { not: null } },
-      select: { rating: true },
-    });
-    const values = ratings.map((r) => r.rating!).filter((r) => r != null);
     res.json({
       id: provider.userId,
       name: provider.user.name,
@@ -76,8 +62,6 @@ router.get(
       address: provider.address,
       phoneNo: provider.phoneNo,
       services: provider.services,
-      rating: values.length ? values.reduce((a, b) => a + b, 0) / values.length : null,
-      reviewCount: values.length,
     });
   })
 );
@@ -548,6 +532,47 @@ router.delete(
     }
     await prisma.timeSlot.delete({ where: { id: slot.id } });
     res.status(204).send();
+  })
+);
+
+// A pet only becomes a "client" once an appointment with it has actually
+// happened — matches the requested flow (client list populates after
+// completion, not the moment a booking is made).
+router.get(
+  "/me/clients",
+  asyncHandler(async (req, res) => {
+    const bookings = await prisma.booking.findMany({
+      where: { providerId: req.user!.userId, status: "COMPLETED" },
+      include: {
+        pet: true,
+        service: true,
+        slot: true,
+        petParent: { include: { user: { select: { id: true, name: true, email: true } } } },
+      },
+      orderBy: { slot: { startDatetime: "desc" } },
+    });
+
+    const clientsByPet = new Map<string, any>();
+    for (const booking of bookings) {
+      if (!clientsByPet.has(booking.petId)) {
+        clientsByPet.set(booking.petId, {
+          pet: booking.pet,
+          owner: {
+            name: booking.petParent.user.name,
+            email: booking.petParent.user.email,
+            phoneNo: booking.petParent.phoneNo,
+          },
+          appointments: [],
+        });
+      }
+      clientsByPet.get(booking.petId).appointments.push({
+        id: booking.id,
+        serviceName: booking.service.name,
+        startDatetime: booking.slot.startDatetime,
+      });
+    }
+
+    res.json(Array.from(clientsByPet.values()));
   })
 );
 

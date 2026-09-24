@@ -96,19 +96,10 @@ export default function ProviderProfile() {
                 <span className="material-symbols-outlined text-[18px]">location_on</span>
                 <p className="font-body-md text-body-md">{provider.address}</p>
               </div>)}
-          </div>
-
-          <div className="mt-8 grid grid-cols-2 gap-3">
-            <div className="soft-card-shadow flex flex-col items-center justify-center rounded-2xl border border-outline-variant/30 bg-white p-4">
-              <span className="font-headline-md text-headline-md text-primary">
-                {provider.rating != null ? provider.rating.toFixed(1) : "—"}
-              </span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant">Rating</span>
-            </div>
-            <div className="soft-card-shadow flex flex-col items-center justify-center rounded-2xl border border-outline-variant/30 bg-white p-4">
-              <span className="font-headline-md text-headline-md text-primary">{provider.reviewCount}</span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant">Reviews</span>
-            </div>
+            {provider.phoneNo && (<div className="mt-1 flex items-center gap-1 text-on-surface-variant">
+                <span className="material-symbols-outlined text-[18px]">call</span>
+                <p className="font-body-md text-body-md">{provider.phoneNo}</p>
+              </div>)}
           </div>
         </section>
 

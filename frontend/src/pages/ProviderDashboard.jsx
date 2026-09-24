@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ProviderLayout } from "../layouts/ProviderLayout";
 import { api } from "../lib/api";
 import { Avatar } from "../components/Avatar";
 import { NotificationBell } from "../components/NotificationBell";
+import { Modal } from "../components/Modal";
+import { RescheduleModal } from "../components/RescheduleModal";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 const GRID_START_HOUR = 8;
 const GRID_END_HOUR = 19; // exclusive
 const ROW_HEIGHT_PX = 80;
@@ -39,6 +42,8 @@ export default function ProviderDashboard() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("UPCOMING");
     const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+    const [agendaDay, setAgendaDay] = useState(null);
+    const navigate = useNavigate();
     const loadBookings = useCallback(async () => {
         const data = await api.get("/bookings");
         setBookings(data);
@@ -69,6 +74,9 @@ export default function ProviderDashboard() {
     );
     function bookingsForDay(day) {
         return filteredBookings.filter((b) => isSameDay(new Date(b.slot.startDatetime), day));
+    }
+    function handleBookingChanged(updated) {
+        setBookings((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
     }
     return (<ProviderLayout active="calendar">
       <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant bg-surface px-4 md:px-8">
@@ -120,14 +128,14 @@ export default function ProviderDashboard() {
             <div className="h-14"/>
             {weekDays.map((day) => {
             const isToday = isSameDay(day, today);
-            return (<div key={day.toISOString()} className={`flex h-14 flex-col items-center justify-center border-l border-outline-variant ${isToday ? "bg-primary-container/20" : ""}`}>
+            return (<button key={day.toISOString()} onClick={() => setAgendaDay(day)} title="View all appointments this day" className={`flex h-14 flex-col items-center justify-center border-l border-outline-variant transition-colors hover:bg-surface-variant/50 ${isToday ? "bg-primary-container/20" : ""}`}>
                   <span className={`text-xs font-bold ${isToday ? "text-primary" : "text-on-surface-variant"}`}>
                     {DAY_LABELS[day.getDay()]}
                   </span>
                   {isToday ? (<div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-body-lg font-bold text-on-primary">
                       {day.getDate()}
                     </div>) : (<span className="text-body-lg font-bold">{day.getDate()}</span>)}
-                </div>);
+                </button>);
         })}
           </div>
 
@@ -145,7 +153,7 @@ export default function ProviderDashboard() {
                 const end = new Date(booking.slot.endDatetime);
                 const startOffset = start.getHours() + start.getMinutes() / 60 - GRID_START_HOUR;
                 const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-                return (<div key={booking.id} className="absolute left-1 right-1 z-20 cursor-pointer rounded-xl border border-white/20 bg-primary-container p-3 text-on-primary-container shadow-md transition-transform hover:scale-[1.02]" style={{ top: startOffset * ROW_HEIGHT_PX, height: durationHours * ROW_HEIGHT_PX }}>
+                return (<div key={booking.id} onClick={() => navigate(`/provider/appointments/${booking.id}`)} className="absolute left-1 right-1 z-20 cursor-pointer rounded-xl border border-white/20 bg-primary-container p-3 text-on-primary-container shadow-md transition-transform hover:scale-[1.02]" style={{ top: startOffset * ROW_HEIGHT_PX, height: durationHours * ROW_HEIGHT_PX }}>
                         <p className="text-xs font-bold">{booking.service.name}</p>
                         <p className="text-body-md font-bold">{booking.pet.name}</p>
                         <p className="text-xs opacity-90">
@@ -201,10 +209,104 @@ export default function ProviderDashboard() {
           </div>
         </div>)}
 
+      {agendaDay && (
+        <DayAgendaModal
+          day={agendaDay}
+          bookings={bookings.filter((b) => isSameDay(new Date(b.slot.startDatetime), agendaDay))}
+          onClose={() => setAgendaDay(null)}
+          onChanged={handleBookingChanged}
+        />
+      )}
+
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ddc1b7; border-radius: 10px; }
       `}</style>
     </ProviderLayout>);
+}
+
+function DayAgendaModal({ day, bookings, onClose, onChanged }) {
+  const [cancellingId, setCancellingId] = useState(null);
+  const [reschedulingBooking, setReschedulingBooking] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const sorted = [...bookings].sort(
+    (a, b) => new Date(a.slot.startDatetime).getTime() - new Date(b.slot.startDatetime).getTime()
+  );
+
+  async function handleCancel() {
+    const booking = cancelTarget;
+    setCancellingId(booking.id);
+    try {
+      const updated = await api.patch(`/bookings/${booking.id}/cancel`);
+      onChanged(updated);
+      setCancelTarget(null);
+    } finally {
+      setCancellingId(null);
+    }
+  }
+
+  return (
+    <Modal title={day.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} onClose={onClose}>
+      {sorted.length === 0 ? (
+        <p className="font-body-md text-body-md text-on-surface-variant">No appointments this day.</p>
+      ) : (
+        <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+          {sorted.map((b) => {
+            const canManage = b.status === "PENDING" || b.status === "CONFIRMED";
+            return (
+              <div key={b.id} className="rounded-xl border border-outline-variant bg-surface-container-lowest p-3">
+                <Link to={`/provider/appointments/${b.id}`} className="block">
+                  <p className="font-label-md text-label-md text-on-surface">
+                    {new Date(b.slot.startDatetime).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                    {" — "}
+                    {b.service.name} · {b.pet.name}
+                  </p>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant">{b.status}</p>
+                </Link>
+                {canManage && (
+                  <div className="mt-2 flex gap-4">
+                    <button
+                      onClick={() => setReschedulingBooking(b)}
+                      className="font-label-sm text-label-sm text-secondary"
+                    >
+                      Reschedule
+                    </button>
+                    <button
+                      onClick={() => setCancelTarget(b)}
+                      disabled={cancellingId === b.id}
+                      className="font-label-sm text-label-sm text-error disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {reschedulingBooking && (
+        <RescheduleModal
+          booking={reschedulingBooking}
+          onClose={() => setReschedulingBooking(null)}
+          onRescheduled={(updated) => {
+            onChanged(updated);
+            setReschedulingBooking(null);
+          }}
+        />
+      )}
+      {cancelTarget && (
+        <ConfirmDialog
+          title="Cancel this appointment?"
+          message="This frees up the time slot and notifies the pet parent."
+          confirmLabel="Cancel Appointment"
+          confirming={cancellingId === cancelTarget.id}
+          onConfirm={handleCancel}
+          onCancel={() => setCancelTarget(null)}
+        />
+      )}
+    </Modal>
+  );
 }

@@ -1,8 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
+import { NotificationBell } from "../components/NotificationBell";
 import { useAuth } from "../context/AuthContext";
 const NAV_ITEMS = [
     { key: "calendar", label: "Calendar", icon: "calendar_month", to: "/provider/dashboard" },
     { key: "services", label: "Services", icon: "design_services", to: "/provider/services" },
+    { key: "clients", label: "Clients", icon: "group", to: "/provider/clients" },
     { key: "settings", label: "Settings", icon: "settings", to: "/provider/settings" },
 ];
 export function ProviderLayout({ active, children, }) {
@@ -13,6 +15,10 @@ export function ProviderLayout({ active, children, }) {
         navigate("/login");
     }
     return (<div className="min-h-screen overflow-x-hidden bg-surface-container-low font-body-md text-body-md text-on-surface">
+      <div className="fixed right-4 top-4 z-50">
+        <NotificationBell />
+      </div>
+
       {/* Desktop sidebar */}
       <aside className="fixed left-0 top-0 z-50 hidden h-screen w-64 flex-col gap-2 border-r border-outline-variant bg-surface-container-low p-4 md:flex">
         <div className="mb-8 px-4">
@@ -27,14 +33,6 @@ export function ProviderLayout({ active, children, }) {
                 <span className="material-symbols-outlined">{item.icon}</span>
                 {item.label}
               </Link>))}
-          <span className="flex cursor-not-allowed items-center gap-3 rounded-lg px-4 py-3 text-on-surface-variant/50">
-            <span className="material-symbols-outlined">group</span>
-            Clients
-          </span>
-          <span className="flex cursor-not-allowed items-center gap-3 rounded-lg px-4 py-3 text-on-surface-variant/50">
-            <span className="material-symbols-outlined">star</span>
-            Reviews
-          </span>
         </nav>
         <div className="mt-auto flex flex-col gap-1 border-t border-outline-variant pt-4">
           <button onClick={handleLogout} className="flex items-center gap-3 rounded-lg px-4 py-3 text-on-surface-variant transition-all duration-200 hover:bg-surface-variant">

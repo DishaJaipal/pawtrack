@@ -11,11 +11,11 @@ import FindAProvider from "./pages/FindAProvider";
 import ProviderProfile from "./pages/ProviderProfile";
 import BookingManagement from "./pages/BookingManagement";
 import BookingDetails from "./pages/BookingDetails";
-import SubmitReview from "./pages/SubmitReview";
-import ClientReviews from "./pages/ClientReviews";
 import ProviderDashboard from "./pages/ProviderDashboard";
 import ProviderServices from "./pages/ProviderServices";
 import ProviderSettings from "./pages/ProviderSettings";
+import ProviderAppointment from "./pages/ProviderAppointment";
+import ProviderClients from "./pages/ProviderClients";
 import PetProfile from "./pages/PetProfile";
 function App() {
     return (<Routes>
@@ -39,17 +39,11 @@ function App() {
       <Route path="/providers/:providerId" element={<ProtectedRoute role="PET_PARENT">
             <ProviderProfile />
           </ProtectedRoute>}/>
-      <Route path="/providers/:providerId/reviews" element={<ProtectedRoute role="PET_PARENT">
-            <ClientReviews />
-          </ProtectedRoute>}/>
       <Route path="/bookings" element={<ProtectedRoute role="PET_PARENT">
             <BookingManagement />
           </ProtectedRoute>}/>
       <Route path="/bookings/:bookingId" element={<ProtectedRoute role="PET_PARENT">
             <BookingDetails />
-          </ProtectedRoute>}/>
-      <Route path="/bookings/:bookingId/review" element={<ProtectedRoute role="PET_PARENT">
-            <SubmitReview />
           </ProtectedRoute>}/>
 
       <Route path="/provider/dashboard" element={<ProtectedRoute role="PROVIDER">
@@ -60,6 +54,12 @@ function App() {
           </ProtectedRoute>}/>
       <Route path="/provider/settings" element={<ProtectedRoute role="PROVIDER">
             <ProviderSettings />
+          </ProtectedRoute>}/>
+      <Route path="/provider/appointments/:bookingId" element={<ProtectedRoute role="PROVIDER">
+            <ProviderAppointment />
+          </ProtectedRoute>}/>
+      <Route path="/provider/clients" element={<ProtectedRoute role="PROVIDER">
+            <ProviderClients />
           </ProtectedRoute>}/>
 
       <Route path="*" element={<Navigate to="/" replace/>}/>

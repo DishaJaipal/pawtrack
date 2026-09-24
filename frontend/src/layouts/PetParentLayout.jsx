@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { NotificationBell } from "../components/NotificationBell";
 const NAV_ITEMS = [
     { key: "home", label: "Home", icon: "home", to: "/" },
     { key: "search", label: "Search", icon: "search", to: "/providers" },
@@ -6,6 +7,10 @@ const NAV_ITEMS = [
 ];
 export function PetParentLayout({ active, children, }) {
     return (<div className="min-h-screen bg-background font-body-md text-on-surface">
+      <div className="fixed right-4 top-4 z-50">
+        <NotificationBell />
+      </div>
+
       {/* Desktop sidebar */}
       <aside className="fixed left-0 top-0 z-50 hidden h-screen w-64 flex-col gap-2 border-r border-outline-variant bg-surface-container-low p-4 md:flex">
         <div className="mb-8 px-4">
