@@ -4,6 +4,7 @@ import { z } from "zod";
 import { asyncHandler } from "../lib/asyncHandler";
 import { writeAudit } from "../lib/audit";
 import { RecordType } from "../lib/enums";
+import { notifyNow } from "../lib/notifications";
 import { prisma } from "../lib/prisma";
 import { absolutePathForRecord, uploadRecordFile } from "../lib/upload";
 import { requireAuth, requireRole } from "../middleware/auth";
@@ -19,6 +20,20 @@ function recordToDto(record: { id: string; fileUrl: string | null; [key: string]
 
 async function loadOwnedPet(petId: string, ownerId: string) {
   return prisma.pet.findFirst({ where: { id: petId, ownerId, deletedAt: null } });
+}
+
+// Read access to a pet/its records extends to a provider who has (or had) a
+// booking with that pet — matches the original design's "Owner or
+// Provider-with-booking" rule. Write access (edit/delete the pet) stays
+// owner-only; that's still gated with loadOwnedPet directly.
+async function loadAccessiblePet(petId: string, user: { userId: string; role: string }) {
+  const pet = await prisma.pet.findFirst({ where: { id: petId, deletedAt: null } });
+  if (!pet) return null;
+  if (user.role === "PET_PARENT") {
+    return pet.ownerId === user.userId ? pet : null;
+  }
+  const booking = await prisma.booking.findFirst({ where: { petId, providerId: user.userId } });
+  return booking ? pet : null;
 }
 
 router.get(
@@ -65,7 +80,7 @@ router.get(
   "/:petId",
   requireAuth,
   asyncHandler(async (req, res) => {
-    const pet = await loadOwnedPet(req.params.petId, req.user!.userId);
+    const pet = await loadAccessiblePet(req.params.petId, req.user!);
     if (!pet) {
       res.status(404).json({ message: "Pet not found" });
       return;
@@ -114,15 +129,37 @@ router.delete(
       res.status(404).json({ message: "Pet not found" });
       return;
     }
-    const activeBooking = await prisma.booking.findFirst({
-      where: { petId: pet.id, status: { in: ["PENDING", "CONFIRMED"] } },
-    });
-    if (activeBooking) {
-      res.status(409).json({ message: "This pet has an upcoming booking — cancel it first" });
-      return;
-    }
+    const now = new Date();
+
     await prisma.$transaction(async (tx) => {
-      await tx.pet.update({ where: { id: pet.id }, data: { deletedAt: new Date() } });
+      // Deleting a pet is "deactivate", not erase — cancel any active
+      // bookings (freeing their slots back up) and soft-delete its records,
+      // rather than leaving orphaned appointments or blocking the delete.
+      const activeBookings = await tx.booking.findMany({
+        where: { petId: pet.id, status: { in: ["PENDING", "CONFIRMED"] } },
+      });
+      for (const booking of activeBookings) {
+        await tx.timeSlot.update({ where: { id: booking.slotId }, data: { status: "AVAILABLE" } });
+        await tx.booking.update({
+          where: { id: booking.id },
+          data: { status: "CANCELLED", updatedByUserId: req.user!.userId },
+        });
+        await writeAudit(tx, {
+          tableName: "bookings",
+          recordId: booking.id,
+          action: "UPDATE",
+          changedBy: req.user!.userId,
+          oldValues: { status: booking.status },
+          newValues: { status: "CANCELLED", reason: "pet deleted" },
+        });
+      }
+
+      await tx.petRecord.updateMany({
+        where: { petId: pet.id, deletedAt: null },
+        data: { deletedAt: now },
+      });
+
+      await tx.pet.update({ where: { id: pet.id }, data: { deletedAt: now } });
       await writeAudit(tx, {
         tableName: "pets",
         recordId: pet.id,
@@ -148,7 +185,7 @@ router.get(
   "/:petId/records",
   requireAuth,
   asyncHandler(async (req, res) => {
-    const pet = await loadOwnedPet(req.params.petId, req.user!.userId);
+    const pet = await loadAccessiblePet(req.params.petId, req.user!);
     if (!pet) {
       res.status(404).json({ message: "Pet not found" });
       return;
@@ -187,15 +224,15 @@ const createRecordSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   recordDate: z.string().min(1),
+  bookingId: z.string().optional(),
 });
 
 router.post(
   "/:petId/records",
   requireAuth,
-  requireRole("PET_PARENT"),
   uploadRecordFile.single("file"),
   asyncHandler(async (req, res) => {
-    const pet = await loadOwnedPet(req.params.petId, req.user!.userId);
+    const pet = await loadAccessiblePet(req.params.petId, req.user!);
     if (!pet) {
       res.status(404).json({ message: "Pet not found" });
       return;
@@ -205,18 +242,54 @@ router.post(
       res.status(400).json({ message: "Invalid input", issues: parsed.error.issues });
       return;
     }
-    const { recordType, title, description, recordDate } = parsed.data;
+    const { recordType, title, description, recordDate, bookingId } = parsed.data;
 
-    const record = await prisma.petRecord.create({
-      data: {
-        petId: pet.id,
-        recordType,
-        title,
-        description,
-        recordDate: new Date(recordDate),
-        fileUrl: req.file ? req.file.filename : null,
-        uploadedByUserId: req.user!.userId,
-      },
+    if (bookingId) {
+      const booking = await prisma.booking.findFirst({
+        where: { id: bookingId, petId: pet.id, providerId: req.user!.userId },
+        include: { slot: true },
+      });
+      if (!booking) {
+        res.status(400).json({ message: "Invalid appointment for this record" });
+        return;
+      }
+      if (booking.status === "CANCELLED") {
+        res.status(409).json({ message: "This appointment was cancelled — no records can be added to it" });
+        return;
+      }
+      if (booking.slot.startDatetime > new Date()) {
+        res.status(409).json({ message: "You can't add records before the appointment's start time" });
+        return;
+      }
+    }
+
+    const record = await prisma.$transaction(async (tx) => {
+      const created = await tx.petRecord.create({
+        data: {
+          petId: pet.id,
+          bookingId: bookingId ?? null,
+          recordType,
+          title,
+          description,
+          recordDate: new Date(recordDate),
+          fileUrl: req.file ? req.file.filename : null,
+          uploadedByUserId: req.user!.userId,
+        },
+      });
+      if (req.user!.role === "PROVIDER") {
+        await notifyNow(tx, {
+          userId: pet.ownerId,
+          type: "RECORD_UPLOADED",
+          payload: {
+            petId: pet.id,
+            petName: pet.name,
+            recordId: created.id,
+            title: created.title,
+            message: `New record added for ${pet.name}: ${created.title}`,
+          },
+        });
+      }
+      return created;
     });
     res.status(201).json(recordToDto(record));
   })
@@ -230,7 +303,12 @@ router.get(
       where: { id: req.params.recordId, deletedAt: null },
       include: { pet: true },
     });
-    if (!record || !record.fileUrl || record.pet.ownerId !== req.user!.userId) {
+    if (!record || !record.fileUrl) {
+      res.status(404).json({ message: "File not found" });
+      return;
+    }
+    const accessible = await loadAccessiblePet(record.petId, req.user!);
+    if (!accessible) {
       res.status(404).json({ message: "File not found" });
       return;
     }

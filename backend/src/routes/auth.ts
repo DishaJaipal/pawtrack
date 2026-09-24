@@ -125,6 +125,7 @@ router.post("/register", asyncHandler(async (req, res) => {
   });
 
   setAuthCookie(res, user.id, user.role as "PET_PARENT" | "PROVIDER");
+
   const profile = await loadProfile(user.id, user.role);
   res.status(201).json({
     user: { id: user.id, email: user.email, name: user.name, role: user.role },
