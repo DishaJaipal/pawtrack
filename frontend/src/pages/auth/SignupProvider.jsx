@@ -17,7 +17,10 @@ export default function SignupProvider() {
         email: "",
         password: "",
         phoneNo: "",
-        address: "",
+        street: "",
+        city: "",
+        state: "",
+        postalCode: "",
         providerType: PROVIDER_TYPES[0].value,
     });
     const [error, setError] = useState(null);
@@ -35,7 +38,10 @@ export default function SignupProvider() {
                 email: form.email,
                 password: form.password,
                 phoneNo: form.phoneNo || undefined,
-                address: form.address || undefined,
+                street: form.street || undefined,
+                city: form.city || undefined,
+                state: form.state || undefined,
+                postalCode: form.postalCode || undefined,
                 providerType: form.providerType,
             });
             setSession(data.user, data.profile);
@@ -68,7 +74,10 @@ export default function SignupProvider() {
           <FormField id="email" label="Email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}/>
           <FormField id="password" label="Password" type="password" required minLength={8} hint="At least 8 characters" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}/>
           <FormField id="phoneNo" label="Phone number" value={form.phoneNo} onChange={(e) => setForm({ ...form, phoneNo: e.target.value })}/>
-          <FormField id="address" label="Business address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })}/>
+          <FormField id="street" label="Street address" placeholder="123 MG Road" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })}/>
+          <FormField id="city" label="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}/>
+          <FormField id="state" label="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })}/>
+          <FormField id="postalCode" label="Postal code" value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })}/>
           <Button type="submit" disabled={submitting} className="mt-2">
             {submitting ? "Creating account..." : "Create business account"}
           </Button>
