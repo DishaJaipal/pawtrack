@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { NotificationBell } from "../components/NotificationBell";
+// import { NotificationBell } from "../components/NotificationBell";
 import { useAuth } from "../context/AuthContext";
 const NAV_ITEMS = [
     { key: "calendar", label: "Calendar", icon: "calendar_month", to: "/provider/dashboard" },
@@ -15,9 +15,9 @@ export function ProviderLayout({ active, children, }) {
         navigate("/login");
     }
     return (<div className="min-h-screen overflow-x-hidden bg-surface-container-low font-body-md text-body-md text-on-surface">
-      <div className="fixed right-4 top-4 z-50">
+      {/* <div className="fixed right-4 top-4 z-50">
         <NotificationBell />
-      </div>
+      </div> */}
 
       {/* Desktop sidebar */}
       <aside className="fixed left-0 top-0 z-50 hidden h-screen w-64 flex-col gap-2 border-r border-outline-variant bg-surface-container-low p-4 md:flex">

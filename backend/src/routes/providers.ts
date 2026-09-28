@@ -3,6 +3,7 @@ import { z } from "zod";
 import { asyncHandler } from "../lib/asyncHandler";
 import { writeAudit } from "../lib/audit";
 import { ServiceCategory, StaffRole } from "../lib/enums";
+import { haversineKm } from "../lib/geocode";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole } from "../middleware/auth";
 
@@ -22,6 +23,9 @@ router.get(
     // so this is "does the typed text appear in the address" rather than
     // a real distance search.
     const location = typeof req.query.location === "string" ? req.query.location.trim().toLowerCase() : undefined;
+    const lat = typeof req.query.lat === "string" ? parseFloat(req.query.lat) : undefined;
+    const lng = typeof req.query.lng === "string" ? parseFloat(req.query.lng) : undefined;
+    const hasOrigin = lat != null && lng != null && !Number.isNaN(lat) && !Number.isNaN(lng);
 
     const providers = await prisma.providerProfile.findMany({
       where: category ? { providerType: category } : {},
@@ -32,13 +36,29 @@ router.get(
       filtered = filtered.filter((p) => p.address?.toLowerCase().includes(location));
     }
 
-    const results = filtered.map((p) => ({
+    let results = filtered.map((p) => ({
       id: p.userId,
       name: p.user.name,
       providerType: p.providerType,
       address: p.address,
       services: p.services,
+      distanceKm:
+        hasOrigin && p.latitude != null && p.longitude != null
+          ? haversineKm({ latitude: lat!, longitude: lng! }, { latitude: p.latitude, longitude: p.longitude })
+          : null,
     }));
+
+    if (hasOrigin) {
+      // Providers with no geocoded point (geocoding failed, or address never
+      // set) sort to the end rather than being dropped — still findable,
+      // just not ranked by a distance we don't actually have.
+      results = results.sort((a, b) => {
+        if (a.distanceKm == null && b.distanceKm == null) return 0;
+        if (a.distanceKm == null) return 1;
+        if (b.distanceKm == null) return -1;
+        return a.distanceKm - b.distanceKm;
+      });
+    }
 
     res.json(results);
   })

@@ -11,13 +11,31 @@ const PROVIDER_TYPES = [
     { value: "TRAINER", label: "Trainer" },
     { value: "PET_SITTER", label: "Pet Sitter" },
 ];
+// `address` is stored as one joined string ("street, city, state, postal"),
+// not as separate columns — this is a best-effort split to pre-fill the four
+// edit boxes with something reasonable. It's just a starting point for
+// editing, not authoritative: if it splits oddly, the provider can just
+// correct the boxes before saving, and re-saving always re-joins correctly.
+function splitAddress(address) {
+    const parts = (address ?? "").split(",").map((p) => p.trim()).filter(Boolean);
+    return {
+        street: parts[0] ?? "",
+        city: parts[1] ?? "",
+        state: parts[2] ?? "",
+        postalCode: parts[3] ?? "",
+    };
+}
 export default function ProviderSettings() {
     const { user, profile, setSession } = useAuth();
     const providerProfile = profile;
+    const existingAddress = splitAddress(providerProfile?.address);
     const [form, setForm] = useState({
         name: user?.name ?? "",
         phoneNo: providerProfile?.phoneNo ?? "",
-        address: providerProfile?.address ?? "",
+        street: existingAddress.street,
+        city: existingAddress.city,
+        state: existingAddress.state,
+        postalCode: existingAddress.postalCode,
         providerType: providerProfile?.providerType ?? PROVIDER_TYPES[0].value,
     });
     const [error, setError] = useState(null);
@@ -32,7 +50,10 @@ export default function ProviderSettings() {
             const data = await api.patch("/auth/me", {
                 name: form.name,
                 phoneNo: form.phoneNo || null,
-                address: form.address || null,
+                street: form.street || null,
+                city: form.city || null,
+                state: form.state || null,
+                postalCode: form.postalCode || null,
                 providerType: form.providerType,
             });
             setSession(data.user, data.profile);
@@ -65,7 +86,10 @@ export default function ProviderSettings() {
           </FormSelect>
           <FormField id="email" label="Email" value={user?.email ?? ""} disabled hint="Contact support to change your email"/>
           <FormField id="phoneNo" label="Phone number" value={form.phoneNo} onChange={(e) => setForm({ ...form, phoneNo: e.target.value })}/>
-          <FormField id="address" label="Business address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })}/>
+          <FormField id="street" label="Street address" placeholder="123 MG Road" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })}/>
+          <FormField id="city" label="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}/>
+          <FormField id="state" label="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })}/>
+          <FormField id="postalCode" label="Postal code" value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })}/>
           <Button type="submit" disabled={saving} className="mt-2">
             {saving ? "Saving..." : "Save changes"}
           </Button>

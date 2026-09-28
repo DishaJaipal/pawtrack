@@ -4,18 +4,36 @@ import { z } from "zod";
 import { asyncHandler } from "../lib/asyncHandler";
 import { writeAudit } from "../lib/audit";
 import { ProviderType } from "../lib/enums";
+import { geocodeStructured } from "../lib/geocode";
 import { signToken } from "../lib/jwt";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 
+// Collected as separate fields (street/city/state/postal) so they can be
+// geocoded accurately, then joined into one line for storage/display —
+// `address` itself stays a single string column, nothing about how it's
+// stored or read changes.
+function joinAddress(parts: {
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+}): string | null {
+  const joined = [parts.street, parts.city, parts.state, parts.postalCode].filter(Boolean).join(", ");
+  return joined || null;
+}
+
 const baseUserFields = {
   email: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(1),
   phoneNo: z.string().optional(),
-  address: z.string().optional(),
+  street: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  postalCode: z.string().optional(),
 };
 
 const petParentRegisterSchema = z.object({
@@ -91,12 +109,14 @@ router.post("/register", asyncHandler(async (req, res) => {
       },
     });
 
+    const address = joinAddress(data);
+
     if (data.role === "PET_PARENT") {
       await tx.petParentProfile.create({
         data: {
           userId: createdUser.id,
           phoneNo: data.phoneNo,
-          address: data.address,
+          address,
         },
       });
       await tx.pet.create({
@@ -116,7 +136,7 @@ router.post("/register", asyncHandler(async (req, res) => {
           userId: createdUser.id,
           providerType: data.providerType,
           phoneNo: data.phoneNo,
-          address: data.address,
+          address,
         },
       });
     }
@@ -125,6 +145,16 @@ router.post("/register", asyncHandler(async (req, res) => {
   });
 
   setAuthCookie(res, user.id, user.role as "PET_PARENT" | "PROVIDER");
+
+  // Best-effort, after the transaction commits — a slow/failed geocode call
+  // should never block or fail account creation. Uses the structured fields
+  // directly (more accurate than geocoding the joined string).
+  if (user.role === "PROVIDER") {
+    const coords = await geocodeStructured(data);
+    if (coords) {
+      await prisma.providerProfile.update({ where: { userId: user.id }, data: coords });
+    }
+  }
 
   const profile = await loadProfile(user.id, user.role);
   res.status(201).json({
@@ -186,7 +216,10 @@ router.get("/me", requireAuth, asyncHandler(async (req, res) => {
 const updateMeSchema = z.object({
   name: z.string().min(1).optional(),
   phoneNo: z.string().nullable().optional(),
-  address: z.string().nullable().optional(),
+  street: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  state: z.string().nullable().optional(),
+  postalCode: z.string().nullable().optional(),
   providerType: ProviderType.optional(),
 });
 
@@ -196,17 +229,22 @@ router.patch("/me", requireAuth, asyncHandler(async (req, res) => {
     res.status(400).json({ message: "Invalid input", issues: parsed.error.issues });
     return;
   }
-  const { name, phoneNo, address, providerType } = parsed.data;
+  const { name, phoneNo, street, city, state, postalCode, providerType } = parsed.data;
   const userId = req.user!.userId;
+  // Only rebuild `address` when the request actually touched one of its
+  // pieces — the settings form always sends all four together, so a partial
+  // PATCH (e.g. just `name`) can't accidentally wipe the address.
+  const addressTouched = street !== undefined || city !== undefined || state !== undefined || postalCode !== undefined;
+  const address = addressTouched ? joinAddress({ street, city, state, postalCode }) : undefined;
 
   await prisma.$transaction(async (tx) => {
     if (name !== undefined) {
       await tx.user.update({ where: { id: userId }, data: { name } });
     }
     if (req.user!.role === "PET_PARENT") {
-      await tx.petParentProfile.update({ where: { userId }, data: { phoneNo, address } });
+      await tx.petParentProfile.update({ where: { userId }, data: { phoneNo, ...(addressTouched ? { address } : {}) } });
     } else {
-      await tx.providerProfile.update({ where: { userId }, data: { phoneNo, address, providerType } });
+      await tx.providerProfile.update({ where: { userId }, data: { phoneNo, providerType, ...(addressTouched ? { address } : {}) } });
     }
     await writeAudit(tx, {
       tableName: "users",
@@ -216,6 +254,14 @@ router.patch("/me", requireAuth, asyncHandler(async (req, res) => {
       newValues: parsed.data,
     });
   });
+
+  if (req.user!.role === "PROVIDER" && addressTouched) {
+    const coords = address ? await geocodeStructured({ street, city, state, postalCode }) : null;
+    await prisma.providerProfile.update({
+      where: { userId },
+      data: { latitude: coords?.latitude ?? null, longitude: coords?.longitude ?? null },
+    });
+  }
 
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
   const profile = await loadProfile(userId, user.role);
