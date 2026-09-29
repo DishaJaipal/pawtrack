@@ -1,13 +1,13 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { pushToUser } from "./sse";
 
 type TxClient = PrismaClient | Prisma.TransactionClient;
 
 // Reminders are created at booking time but stay invisible (sentAt null)
-// until their scheduledFor passes — the cron in cron.ts flips sentAt, which
-// is what makes them show up in GET /api/notifications. Two are scheduled
-// per side: one at 8am on the appointment's own calendar date ("day of"),
-// one 2 hours before the actual start time.
+// until their scheduledFor passes — GET /api/notifications flips sentAt on
+// any of the requesting user's due rows the moment they next poll, which is
+// what makes them show up. Two are scheduled per side: one at 8am on the
+// appointment's own calendar date ("day of"), one 2 hours before the actual
+// start time.
 export async function scheduleAppointmentReminders(
   tx: TxClient,
   params: {
@@ -34,15 +34,15 @@ export async function scheduleAppointmentReminders(
 }
 
 // For anything that should show up right away (cancel/reschedule/new
-// booking/record upload) — writes the notification as already "sent" and
-// pushes it over SSE to that user's open tabs, if any. No queue, no
-// polling delay: this is called directly from the route handler that
-// caused the event, in the same request.
+// booking/record upload) — writes the notification already marked "sent".
+// That's the entire job: the affected user's next poll (within ~20s) picks
+// it up via the ordinary GET /api/notifications fetch, same as any other
+// notification.
 export async function notifyNow(
   tx: TxClient,
   params: { userId: string; type: string; payload: Record<string, unknown> }
 ) {
-  const notification = await tx.notification.create({
+  await tx.notification.create({
     data: {
       userId: params.userId,
       type: params.type,
@@ -50,5 +50,4 @@ export async function notifyNow(
       sentAt: new Date(),
     },
   });
-  pushToUser(params.userId, { ...notification, payload: params.payload });
 }

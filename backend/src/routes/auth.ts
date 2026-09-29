@@ -4,17 +4,15 @@ import { z } from "zod";
 import { asyncHandler } from "../lib/asyncHandler";
 import { writeAudit } from "../lib/audit";
 import { ProviderType } from "../lib/enums";
-import { geocodeStructured } from "../lib/geocode";
 import { signToken } from "../lib/jwt";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 
-// Collected as separate fields (street/city/state/postal) so they can be
-// geocoded accurately, then joined into one line for storage/display —
-// `address` itself stays a single string column, nothing about how it's
-// stored or read changes.
+// Collected as separate fields (street/city/state/postal) purely for a
+// cleaner entry form, then joined into one line for storage/display —
+// `address` itself stays a single string column with no coordinates behind it.
 function joinAddress(parts: {
   street?: string | null;
   city?: string | null;
@@ -146,16 +144,6 @@ router.post("/register", asyncHandler(async (req, res) => {
 
   setAuthCookie(res, user.id, user.role as "PET_PARENT" | "PROVIDER");
 
-  // Best-effort, after the transaction commits — a slow/failed geocode call
-  // should never block or fail account creation. Uses the structured fields
-  // directly (more accurate than geocoding the joined string).
-  if (user.role === "PROVIDER") {
-    const coords = await geocodeStructured(data);
-    if (coords) {
-      await prisma.providerProfile.update({ where: { userId: user.id }, data: coords });
-    }
-  }
-
   const profile = await loadProfile(user.id, user.role);
   res.status(201).json({
     user: { id: user.id, email: user.email, name: user.name, role: user.role },
@@ -254,14 +242,6 @@ router.patch("/me", requireAuth, asyncHandler(async (req, res) => {
       newValues: parsed.data,
     });
   });
-
-  if (req.user!.role === "PROVIDER" && addressTouched) {
-    const coords = address ? await geocodeStructured({ street, city, state, postalCode }) : null;
-    await prisma.providerProfile.update({
-      where: { userId },
-      data: { latitude: coords?.latitude ?? null, longitude: coords?.longitude ?? null },
-    });
-  }
 
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
   const profile = await loadProfile(userId, user.role);

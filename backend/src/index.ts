@@ -3,7 +3,6 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express, { type NextFunction, type Request, type Response } from "express";
 import multer from "multer";
-import { startNotificationCron } from "./lib/cron";
 import authRouter from "./routes/auth";
 import bookingsRouter from "./routes/bookings";
 import notificationsRouter from "./routes/notifications";
@@ -41,5 +40,3 @@ const port = process.env.PORT ?? 4000;
 app.listen(port, () => {
   console.log(`PawTrack API listening on port ${port}`);
 });
-
-startNotificationCron();
