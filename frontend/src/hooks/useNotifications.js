@@ -13,10 +13,11 @@ export function notificationText(n) {
   return build ? build(n.payload ?? {}) : "New notification";
 }
 
-// Fetches the notification list once on login, then keeps it live via a
-// Server-Sent Events connection — the browser's EventSource reconnects on
-// its own if the connection drops, so a missed push just means the next
-// GET picks it up on the following page load.
+const POLL_INTERVAL_MS = 20000;
+
+// Fetches the notification list on login, then just asks again every 20
+// seconds for as long as you're logged in — the same GET request either
+// way, just repeated on a timer instead of pushed over a live connection.
 export function useNotifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
@@ -27,19 +28,16 @@ export function useNotifications() {
       return;
     }
     let cancelled = false;
-    api.get("/notifications").then((data) => {
+    async function poll() {
+      const data = await api.get("/notifications");
       if (!cancelled) setNotifications(data);
-    });
-
-    const source = new EventSource("/api/notifications/stream", { withCredentials: true });
-    source.onmessage = (e) => {
-      const notification = JSON.parse(e.data);
-      setNotifications((prev) => [notification, ...prev]);
-    };
+    }
+    poll();
+    const interval = setInterval(poll, POLL_INTERVAL_MS);
 
     return () => {
       cancelled = true;
-      source.close();
+      clearInterval(interval);
     };
   }, [user]);
 
