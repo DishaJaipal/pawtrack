@@ -16,9 +16,6 @@ export default function FindAProvider() {
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState(null);
     const [location, setLocation] = useState("");
-    const [coords, setCoords] = useState(null);
-    const [locating, setLocating] = useState(false);
-    const [locationError, setLocationError] = useState(null);
     const load = useCallback(async () => {
         const params = new URLSearchParams();
         if (search.trim())
@@ -27,29 +24,10 @@ export default function FindAProvider() {
             params.set("category", category);
         if (location.trim())
             params.set("location", location.trim());
-        if (coords) {
-            params.set("lat", coords.lat);
-            params.set("lng", coords.lng);
-        }
         const query = params.toString();
         const data = await api.get(`/providers${query ? `?${query}` : ""}`);
         setProviders(data);
-    }, [search, category, location, coords]);
-    function useMyLocation() {
-        if (!navigator.geolocation) {
-            setLocationError("Your browser doesn't support location.");
-            return;
-        }
-        setLocating(true);
-        setLocationError(null);
-        navigator.geolocation.getCurrentPosition((position) => {
-            setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
-            setLocating(false);
-        }, () => {
-            setLocationError("Couldn't get your location — check your browser's permission for this site.");
-            setLocating(false);
-        }, { timeout: 10000 });
-    }
+    }, [search, category, location]);
     useEffect(() => {
         setLoading(true);
         load().finally(() => setLoading(false));
@@ -76,19 +54,6 @@ export default function FindAProvider() {
           </span>
           <input className="h-12 w-full rounded-xl border border-outline-variant bg-surface-container-lowest pl-12 pr-4 font-body-md text-body-md outline-none focus:border-secondary" placeholder="Filter by area, e.g. Kothrud" value={location} onChange={(e) => setLocation(e.target.value)}/>
         </div>
-
-         <div className="mt-3 flex items-center gap-3">
-          <button onClick={useMyLocation} disabled={locating} className="inline-flex border font-medium font-sans text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed data-[shape=pill]:rounded-full data-[width=full]:w-full focus:shadow-none text-sm rounded-md py-2 px-4 shadow-sm hover:shadow-md bg-slate-800 border-slate-800 text-slate-50 hover:bg-slate-700 hover:border-slate-700">
-            <span className="material-symbols-outlined mr-1 align-middle text-[18px]">my_location</span>
-            {locating ? "Locating..." : coords ? "Near you" : "Use current location"}
-          </button>
-          {coords && (
-            <button onClick={() => setCoords(null)} className="font-label-sm text-label-sm text-on-surface-variant underline">
-              Clear
-            </button>
-          )}
-        </div>
-        {locationError && <p className="mt-2 text-sm text-error">{locationError}</p>}
 
         <div className="hide-scrollbar mt-4 flex gap-2 overflow-x-auto pb-2">
           <button onClick={() => setCategory(null)} className={`font-label-md text-label-md whitespace-nowrap rounded-full px-4 py-2 transition-colors ${category === null ? "bg-secondary text-white" : "bg-surface-container text-on-surface-variant"}`}>
@@ -129,9 +94,7 @@ export default function FindAProvider() {
                   <div className="mt-4 flex items-center justify-between">
                     <div className="flex items-center gap-1 text-on-surface-variant">
                       <span className="material-symbols-outlined text-[18px]">location_on</span>
-                      <span className="font-label-md text-label-md">
-                        {p.distanceKm != null ? `${p.distanceKm.toFixed(1)} km away` : p.address ?? "Address not listed"}
-                      </span>
+                      <span className="font-label-md text-label-md">{p.address ?? "Address not listed"}</span>
                     </div>
                     <span className="font-label-md text-label-md font-bold text-primary">Book Now</span>
                   </div>

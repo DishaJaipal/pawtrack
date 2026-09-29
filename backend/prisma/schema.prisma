@@ -63,12 +63,6 @@ model ProviderProfile {
   providerType String   @map("provider_type")
   phoneNo      String?  @map("phone_no")
   address      String?
-  // Geocoded from a *structured* address (street/city/state/postal, sent to
-  // Nominatim as separate params) even though only the assembled string is
-  // kept in `address` — the structure only needs to exist transiently, on
-  // its way to the geocoder, not in permanent storage.
-  latitude     Float?
-  longitude    Float?
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 

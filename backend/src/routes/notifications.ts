@@ -1,41 +1,26 @@
 import { Router } from "express";
 import { asyncHandler } from "../lib/asyncHandler";
 import { prisma } from "../lib/prisma";
-import { addClient, removeClient } from "../lib/sse";
 import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 router.use(requireAuth);
 
-// Kept open indefinitely — the response is never ended. The browser's
-// EventSource reconnects on its own if this drops, so a missed push just
-// means the next GET / (page load) picks up whatever was missed anyway.
-router.get("/stream", (req, res) => {
-  res.set({
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-  });
-  res.flushHeaders();
-
-  const userId = req.user!.userId;
-  addClient(userId, res);
-
-  const heartbeat = setInterval(() => res.write(":\n\n"), 20000);
-  req.on("close", () => {
-    clearInterval(heartbeat);
-    removeClient(userId, res);
-  });
-});
-
 router.get(
   "/",
   asyncHandler(async (req, res) => {
-    // Only notifications whose scheduledFor has passed (sentAt set by the
-    // cron in cron.ts) are visible — one still waiting for its "day of" is
-    // not shown yet.
+    const userId = req.user!.userId;
+
+    // No separate background job: whoever happens to poll delivers their
+    // own due reminders right here, the moment they ask — flip sentAt on
+    // anything of theirs whose scheduledFor has passed, then read the list.
+    await prisma.notification.updateMany({
+      where: { userId, scheduledFor: { lte: new Date() }, sentAt: null },
+      data: { sentAt: new Date() },
+    });
+
     const notifications = await prisma.notification.findMany({
-      where: { userId: req.user!.userId, sentAt: { not: null } },
+      where: { userId, sentAt: { not: null } },
       orderBy: { sentAt: "desc" },
       take: 50,
     });
