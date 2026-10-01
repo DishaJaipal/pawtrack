@@ -1,4 +1,8 @@
-const BASE_URL = "/api";
+// In dev, Vite proxies "/api" to localhost:4000 (see vite.config.js). In
+// production the frontend and backend are on different domains (e.g. this
+// deployed on Vercel, the API on Render), so VITE_API_URL must point at the
+// deployed backend's full URL, e.g. https://pawtrack-backend.onrender.com/api.
+const BASE_URL = import.meta.env.VITE_API_URL ?? "/api";
 export class ApiError extends Error {
     status;
     constructor(status, message) {
