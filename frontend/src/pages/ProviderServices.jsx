@@ -150,7 +150,7 @@ export default function ProviderServices() {
                       </div>
                       {s.description && (<p className="font-body-md text-body-md mt-2 text-on-surface-variant">{s.description}</p>)}
                       <p className="font-label-md text-label-md mt-3 text-on-surface">
-                        ${s.basePrice.toFixed(2)} · {s.durationMinutes} min
+                        ₹{s.basePrice.toFixed(2)} · {s.durationMinutes} min
                       </p>
                       <div className="mt-3 flex flex-wrap gap-4">
                         <button onClick={() => setEditService(s)} className="font-label-sm text-label-sm text-secondary">
@@ -276,7 +276,7 @@ function ServiceFormModal({ service, onClose, onSaved, }) {
             </option>))}
         </FormSelect>
         <div className="grid grid-cols-2 gap-4">
-          <FormField id="basePrice" label="Price ($)" type="number" min={0} step="0.01" required value={form.basePrice} onChange={(e) => setForm({ ...form, basePrice: e.target.value })}/>
+          <FormField id="basePrice" label="Price (₹)" type="number" min={0} step="0.01" required value={form.basePrice} onChange={(e) => setForm({ ...form, basePrice: e.target.value })}/>
           <FormField id="durationMinutes" label="Duration (min)" type="number" min={1} required value={form.durationMinutes} onChange={(e) => setForm({ ...form, durationMinutes: e.target.value })}/>
         </div>
         <FormTextArea id="description" label="Description (optional)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}/>

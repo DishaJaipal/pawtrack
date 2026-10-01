@@ -120,7 +120,7 @@ export default function ProviderProfile() {
                       </p>
                     </div>
                   </div>
-                  <span className="font-headline-md text-headline-md text-primary">${s.basePrice.toFixed(0)}</span>
+                  <span className="font-headline-md text-headline-md text-primary">₹{s.basePrice.toFixed(0)}</span>
                 </button>))}
             </div>)}
         </section>
@@ -201,7 +201,7 @@ function ConfirmBookingModal({ service, slot, onClose, onBooked, }) {
           <p className="font-body-md text-body-md text-on-surface-variant">
             {new Date(slot.startDatetime).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
           </p>
-          <p className="font-label-md text-label-md mt-2 text-primary">${service.basePrice.toFixed(2)}</p>
+          <p className="font-label-md text-label-md mt-2 text-primary">₹{service.basePrice.toFixed(2)}</p>
         </div>
         {pets.length === 0 ? (<p className="font-body-md text-body-md text-on-surface-variant">
             Add a pet before booking a service.
